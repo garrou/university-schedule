@@ -17,5 +17,7 @@ File to keep the last update : **last.json**
 ```
 
 **.env** file with :
-- SESSION
-- URL
+- SESSION (moodle session)
+- URL (pdf url)
+- TOKEN (telegram token)
+- CHAT_ID (telegram chat id)
