@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 FILENAME = 'edt.pdf'
 JSON_FILE = 'last.json'
 
-def convert_obj_to_datetime(obj) -> datetime:
+def convert_obj_to_dt(obj) -> datetime:
     # convert to str and remove +0200
     dt_str = str(obj).replace("'", '').split('+')[0]
     # convert pikepdf date to datetime
@@ -19,10 +19,10 @@ def get_last_update_dt() -> datetime:
         content = json.load(file)
         return datetime.strptime(content['last']['mod_date'], '%Y-%m-%d %H:%M:%S')
 
-def insert_json(info) -> None:
+def insert_json(author: str, mod_date: str) -> None:
     dictionary = {
-        'author': str(info.Author),
-        'mod_date': str(convert_obj_to_datetime(info.ModDate))
+        'author': author,
+        'mod_date': mod_date
     }
     with open(JSON_FILE, 'r+') as file:
         content = json.load(file)
@@ -64,12 +64,12 @@ def main():
         # get metadata
         info = pdf.docinfo
         # get modification date of current pdf
-        curr_mod_dt = convert_obj_to_datetime(info.ModDate)
+        curr_mod_dt = convert_obj_to_dt(info.ModDate)
         # get last modification date from json
         last_mod_dt = get_last_update_dt()
 
         if curr_mod_dt > last_mod_dt:
-            insert_json(info) 
+            insert_json(str(info.Author), str(curr_mod_dt)) 
             send_telegram_msg(f'{str(info.Author)} has updated the university schedule at {curr_mod_dt}. {url}')
 
     except Exception as e:
