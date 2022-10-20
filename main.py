@@ -30,13 +30,13 @@ def insert_json(info) -> None:
         file.seek(0)
         json.dump(content, file, indent=4)
 
-def send_telegram_msg(info, schedule_url: str, mod_dt: datetime) -> None:
+def send_telegram_msg(text: str) -> None:
     token = os.getenv('TOKEN')
     chat_id = os.getenv('CHAT_ID')
     telegram_url = f'https://api.telegram.org/bot{token}/sendMessage'
 
     payload = {
-        'text': f'{str(info.Author)} has updated the university schedule at {mod_dt}. {schedule_url}',
+        'text': text,
         'chat_id': chat_id
     }
     headers = {
@@ -49,21 +49,31 @@ def main():
     session = os.getenv('SESSION')
     url = os.getenv('URL')
     cookies = {'MoodleSession': session}
-    response = requests.get(url, cookies=cookies)
-    open(FILENAME, 'wb').write(response.content)
+
+    now_hour = datetime.now().time()
     
     try:
+        if now_hour.hour == 6 and now_hour.minute == 0:
+            send_telegram_msg("Hello, I'm ready to detect a new schedule")
+
+        # download pdf
+        response = requests.get(url, cookies=cookies)
+        # save pdf
+        open(FILENAME, 'wb').write(response.content)
         pdf = pikepdf.Pdf.open(FILENAME)
+        # get metadata
         info = pdf.docinfo
+        # get modification date of current pdf
         curr_mod_dt = convert_obj_to_datetime(info.ModDate)
+        # get last modification date from json
         last_mod_dt = get_last_update_dt()
 
         if curr_mod_dt > last_mod_dt:
             insert_json(info) 
-            send_telegram_msg(info, url, curr_mod_dt)
+            send_telegram_msg(f'{str(info.Author)} has updated the university schedule at {curr_mod_dt}. {url}')
 
     except Exception as e:
-        print(e)
+        send_telegram_msg(f'@MiageScheduleBot encountered an error : {str(e)} !')
 
 if __name__ == '__main__':
     load_dotenv()
