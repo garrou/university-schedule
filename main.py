@@ -61,7 +61,7 @@ def main():
         if now_hour.hour == 6 and now_hour.minute == 0:
             send_telegram_msg("Hello, I'm ready to detect a new schedule")
 
-        pdf = download_pdf()
+        pdf = download_pdf(url)
                
         # get metadata
         info = pdf.docinfo
