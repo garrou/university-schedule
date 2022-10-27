@@ -9,9 +9,8 @@ FILENAME = 'edt.pdf'
 JSON_FILE = 'last.json'
 
 def convert_obj_to_dt(obj) -> datetime:
-    # convert to str and remove +0200
+    # convert to str and remove zone
     dt_str = str(obj).replace("'", '').split('+')[0]
-    # convert pikepdf date to datetime
     return datetime.strptime(dt_str, 'D:%Y%m%d%H%M%S')
 
 def get_last_update_dt() -> datetime:
@@ -45,26 +44,31 @@ def send_telegram_msg(text: str) -> None:
     }
     requests.post(telegram_url, json=payload, headers=headers)
 
-def main():
-    session = os.getenv('SESSION')
-    url = os.getenv('URL')
-    cookies = {'MoodleSession': session}
+def download_pdf(url: str) -> pikepdf.Pdf:
+    response = requests.get(url, cookies={ 'MoodleSession': os.getenv('SESSION') })
 
+    if response.status_code == 200:
+        open(FILENAME, 'wb').write(response.content)
+        return pikepdf.Pdf.open(FILENAME)
+
+    return None
+
+def main():
+    url = os.getenv('URL')
     now_hour = datetime.now().time()
     
     try:
         if now_hour.hour == 6 and now_hour.minute == 0:
             send_telegram_msg("Hello, I'm ready to detect a new schedule")
 
-        # download pdf
-        response = requests.get(url, cookies=cookies)
-        # save pdf
-        open(FILENAME, 'wb').write(response.content)
-        pdf = pikepdf.Pdf.open(FILENAME)
+        pdf = download_pdf()
+               
         # get metadata
         info = pdf.docinfo
+
         # get modification date of current pdf
         curr_mod_dt = convert_obj_to_dt(info.ModDate)
+
         # get last modification date from json
         last_mod_dt = get_last_update_dt()
 
