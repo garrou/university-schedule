@@ -74,7 +74,7 @@ def main():
 
         if curr_mod_dt > last_mod_dt:
             insert_json(str(info.Author), str(curr_mod_dt)) 
-            send_telegram_msg(f'{str(info.Author)} has updated the university schedule at {curr_mod_dt}. {url}')
+            send_telegram_msg(f'{str(info.Author)} has updated the university schedule. {url}')
 
     except Exception as e:
         send_telegram_msg(f'@MiageScheduleBot encountered an error : {str(e)} !')
