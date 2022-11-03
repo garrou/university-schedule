@@ -30,9 +30,9 @@ def insert_json(author: str, mod_date: str) -> None:
         json.dump(content, file, indent=4)
 
 def send_telegram_msg(text: str) -> None:
-    token = os.getenv('TOKEN')
-    chat_id = os.getenv('CHAT_ID')
-    telegram_url = f'https://api.telegram.org/bot{token}/sendMessage'
+    token: str = os.getenv('TOKEN')
+    chat_id: str = os.getenv('CHAT_ID')
+    telegram_url: str = f'https://api.telegram.org/bot{token}/sendMessage'
 
     payload = {
         'text': text,
@@ -44,8 +44,8 @@ def send_telegram_msg(text: str) -> None:
     }
     requests.post(telegram_url, json=payload, headers=headers)
 
-def download_pdf(url: str) -> pikepdf.Pdf:
-    response = requests.get(url, cookies={ 'MoodleSession': os.getenv('SESSION') })
+def download_pdf(url: str) -> pikepdf.Pdf | None:
+    response: requests.Response = requests.get(url, cookies={ 'MoodleSession': os.getenv('SESSION') })
 
     if response.status_code == 200:
         open(FILENAME, 'wb').write(response.content)
@@ -54,23 +54,23 @@ def download_pdf(url: str) -> pikepdf.Pdf:
     return None
 
 def main():
-    url = os.getenv('URL')
+    url: str = os.getenv('URL')
     now_hour = datetime.now().time()
     
     try:
         if now_hour.hour == 6 and now_hour.minute == 0:
             send_telegram_msg("Hello, I'm ready to detect a new schedule")
 
-        pdf = download_pdf(url)
+        pdf: pikepdf.Pdf | None = download_pdf(url)
                
         # get metadata
         info = pdf.docinfo
 
         # get modification date of current pdf
-        curr_mod_dt = convert_obj_to_dt(info.ModDate)
+        curr_mod_dt: datetime = convert_obj_to_dt(info.ModDate)
 
         # get last modification date from json
-        last_mod_dt = get_last_update_dt()
+        last_mod_dt: datetime = get_last_update_dt()
 
         if curr_mod_dt > last_mod_dt:
             insert_json(str(info.Author), str(curr_mod_dt)) 
